@@ -3,412 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Valya Simulator: ULTRA HARDCORE</title>
+    <title>VALYA ONLINE: GLOBAL RANKING</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.65);
-            --border: rgba(255, 255, 255, 0.5);
-            --danger: #ff4757;
-            --poop-color: #8B4513;
-            --vomit-color: #7bed9f;
-        }
-
+        /* --- СТИЛИ (Дизайн) --- */
+        :root { --glass: rgba(255, 255, 255, 0.95); --accent: #6c5ce7; }
         body {
-            font-family: 'Nunito', sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            background-size: 400% 400%;
-            transition: filter 0.3s;
+            font-family: 'Nunito', sans-serif; margin: 0; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(-45deg, #74b9ff, #a29bfe, #fab1a0, #ff7675);
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
         }
-
-        /* АНИМИРОВАННЫЕ ФОНЫ */
-        body.bg-normal { background: linear-gradient(-45deg, #a18cd1, #fbc2eb, #fad0c4); animation: gradientBG 10s ease infinite; }
-        body.bg-sick { background: linear-gradient(180deg, #525252, #3d72b4); }
-        body.bg-critical { 
-            background: radial-gradient(circle, #870000, #000000); 
-            animation: shake-hard 0.5s infinite; 
-        }
-        
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        @keyframes shake-hard { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
-        @keyframes levelUpFlash { 0% { filter: brightness(1); } 50% { filter: brightness(2) contrast(1.5); } 100% { filter: brightness(1); } }
-        @keyframes floatText { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
-
-        .game-card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 35px;
-            padding: 25px 20px 20px 20px; /* Чуть больше отступ сверху для таймера */
-            width: 90%;
-            max-width: 420px;
-            border: 2px solid var(--border);
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            position: relative;
-            z-index: 10;
-            overflow: hidden; /* Чтобы таймер не вылезал */
-        }
-
-        /* === НОВЫЙ КРАСИВЫЙ ТАЙМЕР === */
-        .timer-container {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 8px;
-            background: rgba(0,0,0,0.1);
-            z-index: 5;
-        }
         
-        .timer-bar {
-            height: 100%; width: 0%;
-            /* Градиент от спокойного синего к опасному красному */
-            background: linear-gradient(to right, #00c6ff, #0072ff, #ff4757, #ff0000);
-            background-size: 300% 100%; /* Растягиваем градиент для анимации */
-            box-shadow: 0 0 8px rgba(0, 198, 255, 0.3);
-            transition: width 0.1s linear;
-        }
-
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
-        .top-info {
-            display: flex; justify-content: space-between; align-items: center;
-            font-weight: 900; color: #333; margin-bottom: 15px; margin-top: 5px;
-        }
-        .lvl-badge {
-            background: #333; color: #fff; padding: 5px 12px; border-radius: 15px; font-size: 14px;
+        .game-card {
+            background: var(--glass); border-radius: 40px; padding: 20px;
+            width: 90%; max-width: 450px; border: 4px solid #fff;
+            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative;
         }
 
         /* АВАТАР */
-        .avatar-container {
-            width: 180px; height: 180px; margin: 0 auto 15px; position: relative;
-        }
+        .avatar-container { width: 180px; height: 180px; margin: 0 auto 15px; position: relative; }
         .avatar-circle {
-            width: 100%; height: 100%; border-radius: 50%;
-            border: 5px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            background: #fff; overflow: hidden; position: relative;
-            transition: transform 0.1s;
+            width: 100%; height: 100%; border-radius: 50%; border: 6px solid #fff;
+            background: #dfe6e9; overflow: hidden; position: relative;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
-        .avatar-img { width: 100%; height: 100%; background-size: cover; background-position: center; }
-        .fallback-emoji { font-size: 90px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        
-        /* СЛОИ ГРЯЗИ */
-        .overlay-icon {
-            position: absolute; font-size: 50px; 
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
-            animation: bounce 0.8s infinite alternate;
-            z-index: 20; display: none;
-        }
-        #poop-icon { bottom: -10px; right: -10px; }
-        #vomit-icon { bottom: -10px; left: -10px; font-size: 45px; animation-delay: 0.2s; }
-        
-        /* ЧАТ */
-        .bubble {
-            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-            background: #fff; padding: 8px 16px; border-radius: 15px;
-            font-weight: 800; color: #2d3436; font-size: 14px;
-            opacity: 0; pointer-events: none; white-space: nowrap;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15); transition: 0.2s;
-            z-index: 100;
-        }
-        .bubble.show { top: -75px; opacity: 1; transform: translateX(-50%) scale(1); }
-        .bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; margin-left: -6px; border-width: 6px 6px 0; border-style: solid; border-color: #fff transparent transparent; }
+        .avatar-img { width: 100%; height: 100%; background-size: cover; background-position: center; display: none; }
+        .fallback-emoji { font-size: 80px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-        /* СТАТИСТИКА */
+        /* ИНТЕРФЕЙС */
+        .top-bar { display: flex; justify-content: space-between; font-weight: 900; margin-bottom: 10px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .stat-item { background: rgba(255,255,255,0.5); padding: 8px 12px; border-radius: 12px; position: relative; overflow: hidden; }
-        .stat-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; }
-        .bar-bg { height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; width: 100%; transition: width 0.2s, background 0.2s; }
-        .stat-item.critical { border: 2px solid var(--danger); animation: pulse-red 0.5s infinite; }
-
+        .stat-item { background: rgba(255,255,255,0.7); padding: 5px; border-radius: 10px; }
+        .bar-bg { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .bar-fill { height: 100%; width: 100%; transition: 0.3s; }
+        
         /* КНОПКИ */
         .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .btn {
-            border: none; background: #fff; padding: 10px 5px; border-radius: 15px;
-            font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px;
-            box-shadow: 0 4px 0 #dfe6e9; cursor: pointer; color: #2d3436;
-            transition: all 0.1s; position: relative; overflow: hidden;
+            border: none; background: #fff; padding: 10px; border-radius: 15px;
+            font-weight: 900; font-size: 11px; cursor: pointer; box-shadow: 0 4px 0 #b2bec3;
+            border: 1px solid #ccc; transition: 0.1s;
         }
         .btn:active { transform: translateY(4px); box-shadow: none; }
-        .btn i { display: block; font-size: 20px; margin-bottom: 4px; }
-
-        /* FLOATING TEXT */
-        .floater {
-            position: absolute; font-weight: 900; font-size: 20px; 
-            pointer-events: none; z-index: 200;
-            text-shadow: 0 2px 0 #fff;
-            animation: floatText 1s forwards;
-        }
-
-        /* GAME OVER */
-        #game-over {
+        .btn i { display: block; font-size: 22px; margin-bottom: 3px; }
+        .btn-menu { width: 100%; background: #6c5ce7; color: white; margin-top: 10px; padding: 12px; font-size: 14px; box-shadow: 0 4px 0 #4834d4; }
+        
+        /* МОДАЛЬНЫЕ ОКНА */
+        .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 999;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            color: var(--danger); padding: 20px; box-sizing: border-box;
+            background: rgba(0,0,0,0.85); z-index: 100; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(5px);
         }
-        #game-over h1 { font-size: 32px; text-transform: uppercase; margin: 0 0 5px 0; line-height: 1.1; text-align: center; }
-        #game-over .sub-text { color: #fff; font-size: 18px; margin-bottom: 20px; font-weight: 700; }
-        #game-over .skull { font-size: 80px; margin: 10px 0 20px; animation: bounce 2s infinite; }
-        #game-over p { color: #ccc; margin: 5px 0; }
-
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
+        .modal-box {
+            background: white; width: 85%; max-width: 350px; padding: 25px;
+            border-radius: 30px; text-align: center; border: 5px solid #6c5ce7;
+            max-height: 80vh; overflow-y: auto;
+        }
+        input { width: 80%; padding: 10px; font-size: 18px; text-align: center; border-radius: 10px; border: 2px solid #ccc; margin: 15px 0; }
+        
+        /* Таблица лидеров */
+        .leaderboard-row {
+            display: flex; justify-content: space-between; padding: 10px;
+            border-bottom: 1px solid #eee; font-weight: bold; font-size: 14px;
+        }
+        .leaderboard-row:nth-child(1) { background: #ffeaa7; color: #d35400; border-radius: 10px; } /* Золото */
+        .loading { color: #888; font-style: italic; }
+        
+        .bubble { position: absolute; top: -60px; left: 50%; transform: translateX(-50%); background: white; padding: 10px; border-radius: 15px; opacity: 0; transition: 0.3s; font-weight: bold; white-space: nowrap; pointer-events: none; }
+        .bubble.show { opacity: 1; }
     </style>
 </head>
-<body class="bg-normal" onclick="initAudio()">
+<body>
+
+<div class="modal" id="login-screen" style="display: flex;">
+    <div class="modal-box">
+        <h2>🌍 МИРОВОЙ РЕЙТИНГ</h2>
+        <p>Введи имя, чтобы тебя видели другие игроки:</p>
+        <input type="text" id="nickname-input" placeholder="Твой никнейм" maxlength="15">
+        <button class="btn btn-menu" onclick="startGame()">ИГРАТЬ</button>
+    </div>
+</div>
+
+<div class="modal" id="leaderboard-screen">
+    <div class="modal-box">
+        <h2>🏆 ТОП ИГРОКОВ МИРА</h2>
+        <div id="leaderboard-list" style="text-align: left;">
+            <p class="loading">Загрузка данных из облака...</p>
+        </div>
+        <button class="btn btn-menu" style="background:#ff7675; margin-top: 15px;" onclick="closeLeaderboard()">ЗАКРЫТЬ</button>
+    </div>
+</div>
 
 <div class="game-card">
-    <div class="timer-container">
-        <div class="timer-bar" id="lvl-timer"></div>
+    <div class="top-bar">
+        <div>🪙 <span id="ui-money">0</span></div>
+        <div>LVL <span id="ui-lvl">1</span></div>
     </div>
-    
-    <div class="top-info">
-        <span>ВАЛЕЧКА SIM</span>
-        <div class="lvl-badge">УРОВЕНЬ <span id="ui-lvl">1</span></div>
-    </div>
-    
+
     <div class="avatar-container">
         <div class="bubble" id="bubble">...</div>
-        <div class="avatar-circle" id="circle">
-            <div class="avatar-img" id="face"></div>
+        <div class="avatar-circle">
+            <div class="avatar-img" id="valya-face"></div>
             <div class="fallback-emoji" id="sticker">👶</div>
         </div>
-        <div class="overlay-icon" id="poop-icon">💩</div>
-        <div class="overlay-icon" id="vomit-icon">🤮</div>
     </div>
 
     <div class="stats-grid">
-        <div class="stat-item" id="box-hunger">
-            <div class="stat-label"><span>Голод</span><span id="txt-hunger">100%</span></div>
-            <div class="bar-bg"><div id="bar-hunger" class="bar-fill" style="background: #ff9ff3;"></div></div>
-        </div>
-        <div class="stat-item" id="box-energy">
-            <div class="stat-label"><span>Бодрость</span><span id="txt-energy">100%</span></div>
-            <div class="bar-bg"><div id="bar-energy" class="bar-fill" style="background: #54a0ff;"></div></div>
-        </div>
-        <div class="stat-item" id="box-happy">
-            <div class="stat-label"><span>Радость</span><span id="txt-happy">100%</span></div>
-            <div class="bar-bg"><div id="bar-happy" class="bar-fill" style="background: #feca57;"></div></div>
-        </div>
-        <div class="stat-item" id="box-health">
-            <div class="stat-label"><span>Здоровье</span><span id="txt-health">100%</span></div>
-            <div class="bar-bg"><div id="bar-health" class="bar-fill" style="background: #1dd1a1;"></div></div>
-        </div>
+        <div class="stat-item"><div class="bar-bg"><div id="bar-hunger" class="bar-fill" style="background:#ff9ff3;width:100%"></div></div></div>
+        <div class="stat-item"><div class="bar-bg"><div id="bar-energy" class="bar-fill" style="background:#54a0ff;width:100%"></div></div></div>
+        <div class="stat-item"><div class="bar-bg"><div id="bar-happy" class="bar-fill" style="background:#feca57;width:100%"></div></div></div>
+        <div class="stat-item"><div class="bar-bg"><div id="bar-health" class="bar-fill" style="background:#1dd1a1;width:100%"></div></div></div>
     </div>
 
     <div class="controls">
-        <button class="btn" onclick="game.act('feed')"><i>🍼</i>КОРМИТЬ</button>
-        <button class="btn" onclick="game.act('play')"><i>🧸</i>ИГРАТЬ</button>
-        <button class="btn" onclick="game.act('sleep')"><i>💤</i>СПАТЬ</button>
-        <button class="btn" onclick="game.act('heal')"><i>💉</i>ЛЕЧИТЬ</button>
-        <button class="btn" onclick="game.act('wash')"><i>🧼</i>МЫТЬ</button>
-        <button class="btn" onclick="game.act('hug')"><i>🤗</i>ЛЮБИТЬ</button>
+        <button class="btn" onclick="Game.act('feed')"><i>🍼</i>ЕСТЬ</button>
+        <button class="btn" onclick="Game.act('play')"><i>🧸</i>ИГРАТЬ</button>
+        <button class="btn" onclick="Game.act('sleep')"><i>💤</i>СПАТЬ</button>
+        <button class="btn" onclick="Game.act('heal')"><i>💊</i>ЛЕЧИТЬ</button>
+        <button class="btn" onclick="Game.act('wash')"><i>🧼</i>МЫТЬ</button>
+        <button class="btn" onclick="Game.act('hug')"><i>🤗</i>ЛЮБИТЬ</button>
     </div>
+
+    <button class="btn btn-menu" onclick="openLeaderboard()">🏆 ОТКРЫТЬ РЕЙТИНГ</button>
 </div>
 
-<div id="game-over">
-    <h1>ВАЛЕЧКУ ЗАБРАЛИ<br>В ДЕТДОМ</h1>
-    <div class="sub-text">Вы плохой родитель :(</div>
-    
-    <div class="skull">☠️</div>
-    <p>Уровень достигнут: <span id="final-lvl">0</span></p>
-    <p>Причина: <span id="death-reason">???</span></p>
-    <button class="btn" onclick="location.reload()" style="width: 200px; font-size: 16px; padding: 15px; margin-top: 20px;">РЕСТАРТ</button>
-</div>
+<script type="module">
+    // ------------------------------------------------------------------
+    // 1. НАСТРОЙКА FIREBASE (Вставь свои данные ниже)
+    // ------------------------------------------------------------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-<script>
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    let audioInited = false;
+    // !!! ВНИМАНИЕ: ЗАМЕНИ ЭТОТ БЛОК НА СВОЙ ИЗ КОНСОЛИ FIREBASE !!!
+    const firebaseConfig = {
+        apiKey : "AIzaSyASFWbFkCGVzD4tkoVmk6TxVD9eGexFs6E" , 
+  	authDomain : "valya-game.firebaseapp.com" , 
+  	projectId : "valya-game" , 
+  	storageBucket : "valya-game.firebasestorage.app" , 
+  	messagingSenderId : "317004790952" , 
+  	appId : "1:317004790952:web:eb5e77188d2ccaaaf2569d" , 
+  	measurementId : "G-XYKFL631FX" 
+    };
+    // ------------------------------------------------------------------
 
-    function initAudio() {
-        if (!audioInited) {
-            ctx.resume();
-            audioInited = true;
-            speech("Мама! Я хочу жить!", 1.5, 1.2);
+    // Инициализация базы
+    let db;
+    try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        console.log("База данных подключена!");
+    } catch (e) {
+        console.error("Ошибка подключения к базе. Проверь конфиг!", e);
+    }
+
+    // Глобальные функции для кнопок (так как type="module" изолирует код)
+    window.startGame = () => {
+        const name = document.getElementById('nickname-input').value.trim();
+        if(!name) return alert("Введи имя!");
+        localStorage.setItem('valya_user', name);
+        document.getElementById('login-screen').style.display = 'none';
+        Game.init();
+    };
+
+    window.openLeaderboard = async () => {
+        document.getElementById('leaderboard-screen').style.display = 'flex';
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = '<p class="loading">Загрузка рейтинга мира...</p>';
+
+        if(!db) {
+            list.innerHTML = '<p style="color:red">Ошибка базы данных</p>';
+            return;
         }
-    }
 
-    function sound(type) {
-        if (!audioInited) return;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const now = ctx.currentTime;
+        try {
+            // Запрос в базу: Дай мне коллекцию "scores", отсортируй по lvl (убывание), дай топ 10
+            const q = query(collection(db, "scores"), orderBy("lvl", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            
+            let html = "";
+            let rank = 1;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                html += `
+                    <div class="leaderboard-row">
+                        <span>#${rank++} ${data.name}</span>
+                        <span>Ур. ${data.lvl} | ${data.money}🪙</span>
+                    </div>
+                `;
+            });
 
-        if (type === 'lvlup') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            osc.start(); osc.stop(now + 0.5);
-        } else if (type === 'bad') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.3);
-            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
-            osc.start(); osc.stop(now + 0.3);
-        } else if (type === 'good') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
-            osc.start(); osc.stop(now + 0.2);
+            if(html === "") html = "<p>Пока никто не играл. Будь первым!</p>";
+            list.innerHTML = html;
+
+        } catch (error) {
+            console.error(error);
+            list.innerHTML = "<p>Не удалось загрузить рейтинг. Проверь интернет.</p>";
         }
-        osc.connect(gain); gain.connect(ctx.destination);
-    }
+    };
 
-    function speech(text, pitch = 1.6, rate = 1.3) {
-        if (!window.speechSynthesis || game.dead) return;
-        window.speechSynthesis.cancel();
-        const bubble = document.getElementById('bubble');
-        bubble.innerText = text; bubble.classList.add('show');
-        setTimeout(() => bubble.classList.remove('show'), 2000);
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ru-RU'; u.pitch = pitch; u.rate = rate;
-        window.speechSynthesis.speak(u);
-    }
+    window.closeLeaderboard = () => {
+        document.getElementById('leaderboard-screen').style.display = 'none';
+    };
 
-    const game = {
-        s: { hunger: 100, energy: 100, happy: 100, health: 100 },
-        lvl: 1, timeAlive: 0, dead: false,
-        isSleep: false, isPoop: false, isDiarrhea: false, isVomit: false,
-
+    // ------------------------------------------------------------------
+    // 2. ИГРОВОЙ ДВИЖОК
+    // ------------------------------------------------------------------
+    window.Game = {
+        stats: { hunger: 100, energy: 100, happy: 100, health: 100 },
+        lvl: 1, money: 0, dead: false,
+        
         init() {
-            setInterval(() => this.tick(), 100);
-            setInterval(() => this.events(), 1000);
+            // Проверка сохраненного имени
+            const savedName = localStorage.getItem('valya_user');
+            if(savedName) {
+                document.getElementById('nickname-input').value = savedName;
+                document.getElementById('login-screen').style.display = 'none';
+            } else {
+                return; // Ждем ввода
+            }
+
+            this.preloadImages();
+            setInterval(() => this.tick(), 500); // Игровой цикл
             this.render();
         },
 
-        act(action) {
-            if (this.dead) return;
-            if (!audioInited) initAudio();
-            document.getElementById('circle').style.transform = 'scale(0.9)';
-            setTimeout(() => document.getElementById('circle').style.transform = 'scale(1)', 100);
-            const r = Math.random();
+        preloadImages() {
+            // Предзагрузка фото, чтобы не было стикеров
+            ['happy','sad','cry','sleep','dead'].forEach(mood => {
+                const img = new Image();
+                img.src = `valya_${mood}.png`;
+            });
+        },
 
-            switch(action) {
-                case 'feed':
-                    if (this.isVomit) { speech("Буэ! Не могу!", 1.2, 0.8); this.damage(5, "Кормление при рвоте"); this.createFloater("🤮 БУЭ!", "red"); return; }
-                    if (this.s.hunger > 95) { this.isVomit = true; speech("Ой, переела...", 1.8, 1.5); this.createFloater("ПЕРЕКОРМ!", "red"); } 
-                    else { this.s.hunger += 25; this.s.health += 2; speech(r > 0.5 ? "Ням!" : "Вкусь!", 1.6, 1.2); sound('good'); this.createFloater("+ЕДА", "#ff9ff3"); }
-                    break;
-                case 'play':
-                    if (this.s.energy < 20) { speech("Хочу спааать!", 1.4, 0.9); this.s.happy -= 5; } 
-                    else { this.s.happy += 20; this.s.energy -= 15; this.s.hunger -= 10; speech("Хи хи хи!", 1.9, 1.4); sound('good'); this.createFloater("+СЧАСТЬЕ", "#feca57"); }
-                    break;
-                case 'sleep':
-                    this.isSleep = !this.isSleep; speech(this.isSleep ? "Бай-бай..." : "Я проснулась!", this.isSleep ? 0.8 : 1.6); break;
-                case 'heal':
-                    this.s.health += 40; this.s.happy -= 20; speech("Ааа! Больно!", 2.0, 1.5); sound('bad'); this.createFloater("+HP -СЧАСТЬЕ", "#1dd1a1"); break;
-                case 'wash':
-                    if (this.isPoop || this.isVomit || this.isDiarrhea) { this.isPoop = false; this.isVomit = false; this.isDiarrhea = false; this.s.happy += 15; speech("Чисто!", 1.6, 1.2); sound('good'); this.createFloater("ЧИСТОТА!", "#74b9ff"); } 
-                    else { this.s.happy -= 10; speech("Я чистая!", 1.5, 1); }
-                    break;
-                case 'hug':
-                    this.s.happy += 10; speech("Люблю!", 1.5, 1.1); this.createFloater("❤️", "red"); break;
+        act(action) {
+            if(this.dead) return;
+            const s = this.stats;
+            
+            if(action === 'feed') { s.hunger += 20; this.say("Ням-ням"); }
+            if(action === 'play') { s.happy += 15; s.energy -= 10; this.say("Весело!"); }
+            if(action === 'sleep') { s.energy += 100; s.hunger -= 20; this.say("Хррр..."); }
+            if(action === 'heal') { 
+                if(this.money >= 10) { this.money -= 10; s.health += 50; this.say("Спасибо!"); }
+                else this.say("Нет денег!");
             }
-            this.fixStats(); this.render();
+            if(action === 'wash') { s.happy += 10; this.say("Чисто!"); }
+            if(action === 'hug') { s.happy += 5; this.say("❤️"); }
+
+            this.checkBounds();
+            this.render();
         },
 
         tick() {
-            if (this.dead) return;
-            this.timeAlive += 0.1;
-            const cycle = 10; 
-            const progress = (this.timeAlive % cycle) / cycle;
+            if(this.dead) return;
+            const s = this.stats;
+            s.hunger -= 1; s.energy -= 0.5; s.happy -= 0.5;
+            if(s.hunger <= 0 || s.happy <= 0) s.health -= 1;
             
-            // --- ОБНОВЛЕНИЕ КРАСИВОГО ТАЙМЕРА ---
-            const timerBar = document.getElementById('lvl-timer');
-            timerBar.style.width = (progress * 100) + '%';
-            // Сдвигаем градиент, чтобы к концу он становился красным
-            timerBar.style.backgroundPosition = (100 - (progress * 80)) + '% 0%';
-            // Добавляем свечение в конце
-            if (progress > 0.8) timerBar.style.boxShadow = `0 0 15px rgba(255, 71, 87, ${progress})`;
-            else timerBar.style.boxShadow = '0 0 8px rgba(0, 198, 255, 0.3)';
-
-
-            if (Math.floor(this.timeAlive) > 0 && Math.floor(this.timeAlive) % cycle === 0 && (this.timeAlive - Math.floor(this.timeAlive) < 0.1)) {
-                this.levelUp();
+            // Левел ап
+            if(Math.random() < 0.02) {
+                this.lvl++; this.money += 20;
+                this.say("LEVEL UP!");
             }
 
-            const difficulty = 1 + (this.lvl * 0.15);
-            if (this.isSleep) { this.s.energy += 0.5; this.s.hunger -= 0.15 * difficulty; } 
-            else { this.s.energy -= 0.1 * difficulty; this.s.hunger -= 0.25 * difficulty; this.s.happy -= 0.15 * difficulty; }
-
-            if (this.isPoop) { this.s.health -= 0.1 * difficulty; this.s.happy -= 0.2; }
-            if (this.isDiarrhea) { this.s.health -= 0.4 * difficulty; this.s.hunger -= 0.2; }
-            if (this.isVomit) { this.s.health -= 0.1; this.s.hunger += 0.1; }
-
-            if (this.s.hunger <= 0) this.damage(0.5 * difficulty, "Голод");
-            if (this.s.happy <= 0) this.damage(0.2 * difficulty, "Депрессия");
-            this.fixStats(); this.render();
+            if(s.health <= 0) this.gameOver();
+            this.render();
         },
 
-        events() {
-            if (this.dead || this.isSleep) return;
-            const risk = 0.05 + (this.lvl * 0.02);
-            if (Math.random() < risk) {
-                const type = Math.random();
-                if (type < 0.5 && !this.isPoop) { this.isPoop = true; speech("Кака!", 1.2); sound('bad'); this.createFloater("💩 УПС...", "#8B4513"); } 
-                else if (type < 0.8 && !this.isVomit) { this.isVomit = true; speech("Бееее...", 1.0, 0.8); sound('bad'); this.createFloater("🤮 ТОШНИТ", "#7bed9f"); } 
-                else if (!this.isDiarrhea) { this.isDiarrhea = true; this.isPoop = true; speech("Живот болит!!!", 2.0, 1.5); sound('bad'); this.createFloater("💥 ПОНОС!!", "red"); }
-            }
+        checkBounds() {
+            for(let key in this.stats) this.stats[key] = Math.max(0, Math.min(100, this.stats[key]));
         },
-
-        levelUp() {
-            this.lvl++; sound('lvlup'); speech("Уровень " + this.lvl, 1.8, 1.3);
-            document.body.style.animation = 'levelUpFlash 0.5s'; setTimeout(() => document.body.style.animation = '', 500);
-            this.createFloater("LEVEL UP!!!", "white");
-        },
-
-        damage(amount, reason) {
-            this.s.health -= amount;
-            if (this.s.health <= 0) this.die(reason);
-        },
-
-        die(reason) {
-            this.dead = true;
-            document.getElementById('game-over').style.display = 'flex';
-            document.getElementById('final-lvl').innerText = this.lvl;
-            document.getElementById('death-reason').innerText = reason;
-            sound('bad'); speech("Мама, за что...", 0.6, 0.7);
-        },
-
-        createFloater(text, color) {
-            const el = document.createElement('div'); el.className = 'floater'; el.innerText = text; el.style.color = color;
-            el.style.left = (50 + (Math.random()*40 - 20)) + '%'; el.style.top = '40%';
-            document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
-        },
-
-        fixStats() { for (let k in this.s) this.s[k] = Math.min(100, Math.max(0, this.s[k])); },
 
         render() {
+            document.getElementById('bar-hunger').style.width = this.stats.hunger + '%';
+            document.getElementById('bar-energy').style.width = this.stats.energy + '%';
+            document.getElementById('bar-happy').style.width = this.stats.happy + '%';
+            document.getElementById('bar-health').style.width = this.stats.health + '%';
+            
             document.getElementById('ui-lvl').innerText = this.lvl;
-            const setBar = (id, val, color) => {
-                const el = document.getElementById('bar-'+id);
-                document.getElementById('txt-'+id).innerText = Math.floor(val) + '%';
-                el.style.width = val + '%';
-                if (val < 25) { el.style.background = '#ff4757'; document.getElementById('box-'+id).classList.add('critical'); } 
-                else { el.style.background = color; document.getElementById('box-'+id).classList.remove('critical'); }
+            document.getElementById('ui-money').innerText = this.money;
+
+            // Логика фото (с фиксом)
+            let mood = 'happy';
+            let emoji = '👶';
+            if(this.dead) { mood = 'dead'; emoji = '☠️'; }
+            else if(this.stats.health < 40) { mood = 'cry'; emoji = '😭'; }
+            else if(this.stats.happy < 40) { mood = 'sad'; emoji = '🥺'; }
+            
+            const imgDiv = document.getElementById('valya-face');
+            const stickerDiv = document.getElementById('sticker');
+            
+            // Пытаемся показать картинку
+            const img = new Image();
+            img.src = `valya_${mood}.png`;
+            img.onload = () => {
+                imgDiv.style.backgroundImage = `url(valya_${mood}.png)`;
+                imgDiv.style.display = 'block';
+                stickerDiv.style.display = 'none';
             };
-            setBar('hunger', this.s.hunger, '#ff9ff3'); setBar('energy', this.s.energy, '#54a0ff');
-            setBar('happy', this.s.happy, '#feca57'); setBar('health', this.s.health, '#1dd1a1');
+            img.onerror = () => {
+                imgDiv.style.display = 'none';
+                stickerDiv.style.display = 'block';
+                stickerDiv.innerText = emoji;
+            };
+        },
 
-            document.getElementById('poop-icon').style.display = (this.isPoop || this.isDiarrhea) ? 'block' : 'none';
-            document.getElementById('vomit-icon').style.display = this.isVomit ? 'block' : 'none';
+        async gameOver() {
+            this.dead = true;
+            this.render();
+            const name = localStorage.getItem('valya_user');
+            
+            if(confirm(`ВАЛЕЧКА ПОГИБЛА!\nВаш уровень: ${this.lvl}\nСохранить в мировой рейтинг?`)) {
+                if(db) {
+                    try {
+                        // ОТПРАВКА ДАННЫХ В ОБЛАКО
+                        await addDoc(collection(db, "scores"), {
+                            name: name,
+                            lvl: this.lvl,
+                            money: this.money,
+                            date: new Date().toISOString()
+                        });
+                        alert("Результат сохранен в базе мира!");
+                    } catch (e) {
+                        alert("Ошибка сохранения: " + e.message);
+                    }
+                }
+            }
+            location.reload();
+        },
 
-            const face = document.getElementById('face'); const sticker = document.getElementById('sticker');
-            let mood = 'happy'; let emoji = '👶'; let bgClass = 'bg-normal';
-            if (this.dead) emoji = '☠️'; 
-            else if (this.isSleep) { mood = 'sleep'; emoji = '😴'; } 
-            else if (this.isVomit) { mood = 'sick'; emoji = '🤢'; bgClass = 'bg-sick'; } 
-            else if (this.s.health < 40 || this.isDiarrhea) { mood = 'cry'; emoji = '😭'; bgClass = 'bg-critical'; } 
-            else if (this.s.happy < 40 || this.s.hunger < 30) { mood = 'sad'; emoji = '🥺'; }
-            if (document.body.className !== bgClass) document.body.className = bgClass;
-            const img = new Image(); img.src = `valya_${mood}.png`;
-            img.onload = () => { face.style.backgroundImage = `url(${img.src})`; sticker.style.opacity = 0; };
-            img.onerror = () => { face.style.backgroundImage = 'none'; sticker.style.opacity = 1; sticker.innerText = emoji; };
+        say(text) {
+            const b = document.getElementById('bubble');
+            b.innerText = text;
+            b.classList.add('show');
+            setTimeout(() => b.classList.remove('show'), 2000);
         }
     };
-    game.init();
+    
+    // Пытаемся запустить авто-вход, если имя уже есть
+    if(localStorage.getItem('valya_user')) {
+        Game.init();
+    }
 </script>
+
 </body>
 </html>
