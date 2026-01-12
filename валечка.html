@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>VALYA SIMULATOR: ULTRA HARDCORE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.85);
+            --glass-dark: rgba(0, 0, 0, 0.75);
+            --border: rgba(255, 255, 255, 0.6);
+            --danger: #ff4757;
+            --accent: #6c5ce7;
+            --gold: #f1c40f;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-size: 400% 400%;
+            transition: filter 0.3s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* АНИМИРОВАННЫЕ ФОНЫ */
+        body.bg-normal { background: linear-gradient(-45deg, #74b9ff, #a29bfe, #fab1a0, #ff7675); animation: gradientBG 15s ease infinite; }
+        body.bg-sleep { background: linear-gradient(180deg, #2c3e50, #4ca1af); }
+        body.bg-sick { background: linear-gradient(0deg, #434343 0%, #000000 100%); }
+        body.bg-critical { 
+            background: radial-gradient(circle, #ff0000, #4a0000); 
+            animation: shake-hard 0.3s infinite; 
+        }
+        
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes shake-hard { 0% { transform: translate(2px, 2px) rotate(0deg); } 25% { transform: translate(-2px, -3px) rotate(-2deg); } 50% { transform: translate(-4px, 1px) rotate(2deg); } 75% { transform: translate(2px, -2px) rotate(-1deg); } 100% { transform: translate(1px, 2px) rotate(0deg); } }
+        @keyframes floatText { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
+        @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .game-card {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 40px;
+            padding: 20px;
+            width: 92%;
+            max-width: 450px;
+            border: 3px solid #fff;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4), inset 0 0 20px rgba(255,255,255,0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ИНТЕРФЕЙС ВЕРХНИЙ */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; font-weight: 900; color: #2d3436;
+        }
+        .currency-box {
+            background: #ffeaa7; color: #d35400; padding: 5px 12px;
+            border-radius: 20px; font-size: 16px; display: flex; align-items: center; gap: 5px;
+            border: 2px solid #fdcb6e;
+            box-shadow: 0 4px 0 #e1b12c;
+        }
+        .lvl-badge {
+            background: #2d3436; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 14px;
+            border: 2px solid #636e72;
+        }
+
+        /* АВАТАР */
+        .avatar-container {
+            width: 160px; height: 160px; margin: 0 auto 10px; position: relative;
+        }
+        .avatar-circle {
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 6px solid #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: #dfe6e9; overflow: hidden; position: relative;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .avatar-img { width: 100%; height: 100%; background-size: cover; background-position: center; }
+        .fallback-emoji { font-size: 80px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        
+        .status-icon {
+            position: absolute; font-size: 40px; 
+            filter: drop-shadow(0 3px 0 rgba(0,0,0,0.2));
+            animation: bounce 0.8s infinite alternate; z-index: 20; display: none;
+        }
+        #poop-icon { bottom: 0; right: -10px; }
+        #vomit-icon { bottom: 0; left: -10px; font-size: 35px; animation-delay: 0.2s; }
+        #sleep-icon { top: -10px; right: 0; font-size: 40px; animation: floatText 2s infinite; display: none;}
+
+        /* ЧАТ */
+        .bubble {
+            position: absolute; top: -70px; left: 50%; transform: translateX(-50%) scale(0);
+            background: #fff; padding: 10px 20px; border-radius: 20px;
+            font-weight: 800; color: #2d3436; font-size: 15px;
+            opacity: 0; pointer-events: none; white-space: nowrap;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100; border: 2px solid #2d3436;
+        }
+        .bubble.show { opacity: 1; transform: translateX(-50%) scale(1); }
+        .bubble::after { content: ''; position: absolute; bottom: -8px; left: 50%; margin-left: -8px; border-width: 8px 8px 0; border-style: solid; border-color: #2d3436 transparent transparent; }
+
+        /* СТАТИСТИКА */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-item { background: rgba(255,255,255,0.6); padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); }
+        .stat-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; margin-bottom: 4px; text-transform: uppercase; color: #636e72; }
+        .bar-bg { height: 10px; background: rgba(0,0,0,0.1); border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.3s ease, background 0.3s; }
+        .stat-item.critical { border: 2px solid var(--danger); animation: pulse-red 0.5s infinite; background: #ffeaa7; }
+
+        /* ИНВЕНТАРЬ (Активные предметы) */
+        .inventory-row {
+            display: flex; justify-content: center; gap: 10px; height: 30px; margin-bottom: 10px;
+        }
+        .inv-item { font-size: 20px; opacity: 0.3; filter: grayscale(1); transition: 0.3s; position: relative;}
+        .inv-item.active { opacity: 1; filter: grayscale(0); transform: scale(1.2); }
+        .inv-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 4px; white-space: nowrap;}
+        .inv-item:hover .inv-tooltip { display: block; }
+
+        /* КНОПКИ */
+        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;}
+        .btn {
+            border: none; background: #fff; padding: 12px 5px; border-radius: 18px;
+            font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 12px;
+            box-shadow: 0 5px 0 #b2bec3; cursor: pointer; color: #2d3436;
+            transition: all 0.1s; position: relative; overflow: hidden;
+            border: 1px solid #dfe6e9;
+        }
+        .btn:active { transform: translateY(5px); box-shadow: 0 0 0; }
+        .btn i { display: block; font-size: 24px; margin-bottom: 5px; }
+        .btn.disabled { filter: grayscale(1); opacity: 0.6; cursor: not-allowed; }
+        
+        .btn-shop {
+            width: 100%; background: #6c5ce7; color: #fff; box-shadow: 0 5px 0 #4834d4; border: none; font-size: 14px; padding: 10px;
+        }
+        .btn-shop:active { transform: translateY(5px); box-shadow: none; }
+
+        /* МАГАЗИН МОДАЛКА */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 500;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .shop-window {
+            background: #fff; width: 85%; max-width: 350px; border-radius: 30px; padding: 20px;
+            text-align: center; border: 4px solid #6c5ce7;
+            animation: popIn 0.3s;
+        }
+        .shop-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 2px solid #eee; margin-bottom: 5px;
+        }
+        .shop-info { text-align: left; }
+        .shop-name { font-weight: 900; font-size: 14px; display: block; }
+        .shop-desc { font-size: 10px; color: #666; }
+        .buy-btn {
+            background: #00b894; color: white; border: none; padding: 5px 10px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #008f72;
+        }
+        .buy-btn:active { transform: translateY(3px); box-shadow: none; }
+        .buy-btn.bought { background: #b2bec3; box-shadow: none; cursor: default; }
+
+        /* FLOATING TEXT */
+        .floater {
+            position: absolute; font-weight: 900; font-size: 24px; 
+            pointer-events: none; z-index: 200;
+            text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff;
+            animation: floatText 1.2s forwards;
+        }
+
+        /* GAME OVER */
+        #game-over {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 999;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--danger); padding: 20px; box-sizing: border-box;
+        }
+        #game-over h1 { font-size: 32px; text-transform: uppercase; margin: 0 0 5px 0; text-align: center; color: #ff4757; text-shadow: 0 0 10px red; }
+        #game-over .skull { font-size: 100px; margin: 20px 0; animation: bounce 2s infinite; }
+
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .music-toggle {
+            position: absolute; top: 10px; left: 10px; z-index: 50;
+            background: rgba(255,255,255,0.5); padding: 5px; border-radius: 50%;
+            cursor: pointer; font-size: 20px;
+        }
+
+    </style>
+</head>
+<body class="bg-normal" onclick="initAudio()">
+
+<div class="music-toggle" onclick="toggleMusic(event)">🎵</div>
+
+<div class="game-card">
+    <div class="top-bar">
+        <div class="currency-box">🪙 <span id="ui-money">0</span></div>
+        <div class="lvl-badge">LVL <span id="ui-lvl">1</span></div>
+    </div>
+    
+    <div class="avatar-container">
+        <div class="bubble" id="bubble">...</div>
+        <div class="avatar-circle" id="circle">
+            <div class="avatar-img" id="face"></div>
+            <div class="fallback-emoji" id="sticker">👶</div>
+        </div>
+        <div class="status-icon" id="poop-icon">💩</div>
+        <div class="status-icon" id="vomit-icon">🤮</div>
+        <div class="status-icon" id="sleep-icon">💤</div>
+    </div>
+
+    <div class="inventory-row">
+        <div class="inv-item" id="inv-toy" title="Мишка: +Счастье"><div class="inv-tooltip">Мишка</div>🧸</div>
+        <div class="inv-item" id="inv-pacifier" title="Соска: Энергия падает медленнее"><div class="inv-tooltip">Соска</div>👶</div>
+        <div class="inv-item" id="inv-diaper" title="Супер-Памперс: Авто-чистка"><div class="inv-tooltip">Памперс</div>🩲</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-item" id="box-hunger">
+            <div class="stat-label"><span>Голод</span><span id="txt-hunger">100%</span></div>
+            <div class="bar-bg"><div id="bar-hunger" class="bar-fill" style="background: #ff9ff3;"></div></div>
+        </div>
+        <div class="stat-item" id="box-energy">
+            <div class="stat-label"><span>Бодрость</span><span id="txt-energy">100%</span></div>
+            <div class="bar-bg"><div id="bar-energy" class="bar-fill" style="background: #54a0ff;"></div></div>
+        </div>
+        <div class="stat-item" id="box-happy">
+            <div class="stat-label"><span>Радость</span><span id="txt-happy">100%</span></div>
+            <div class="bar-bg"><div id="bar-happy" class="bar-fill" style="background: #feca57;"></div></div>
+        </div>
+        <div class="stat-item" id="box-health">
+            <div class="stat-label"><span>Здоровье</span><span id="txt-health">100%</span></div>
+            <div class="bar-bg"><div id="bar-health" class="bar-fill" style="background: #1dd1a1;"></div></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn action-btn" data-act="feed" onclick="game.act('feed')"><i>🍼</i>НЯМ</button>
+        <button class="btn action-btn" data-act="play" onclick="game.act('play')"><i>🧸</i>ИГРА</button>
+        <button class="btn action-btn" data-act="sleep" onclick="game.act('sleep')"><i>💤</i>СОН</button>
+        <button class="btn action-btn" data-act="heal" onclick="game.act('heal')"><i>💊</i>ЛЕЧИТЬ</button>
+        <button class="btn action-btn" data-act="wash" onclick="game.act('wash')"><i>🧼</i>МЫТЬ</button>
+        <button class="btn action-btn" data-act="hug" onclick="game.act('hug')"><i>🤗</i>ЛЮБОВЬ</button>
+    </div>
+
+    <button class="btn btn-shop" onclick="shop.toggle()">🛒 МАГАЗИН ИГРУШЕК</button>
+</div>
+
+<div class="modal-overlay" id="shop-modal" onclick="if(event.target===this) shop.toggle()">
+    <div class="shop-window">
+        <h2>🧸 ДЕТСКИЙ МИР</h2>
+        <div id="shop-list">
+            </div>
+        <button class="btn" style="margin-top:15px; width:100%; background:#ff7675; color:white;" onclick="shop.toggle()">ЗАКРЫТЬ</button>
+    </div>
+</div>
+
+<div id="game-over">
+    <h1>ВАЛЕЧКУ ЗАБРАЛИ<br>В ДЕТДОМ</h1>
+    <div style="color:white; font-weight:bold; margin-bottom:10px;">Вы продержались: <span id="final-time">0</span> сек</div>
+    <div class="skull">☠️</div>
+    <p>Уровень: <span id="final-lvl">0</span></p>
+    <p>Причина: <span id="death-reason" style="color:yellow">???</span></p>
+    <button class="btn" onclick="location.reload()" style="width: 200px; font-size: 16px; padding: 15px; margin-top: 20px; background:#fff;">РЕСТАРТ</button>
+</div>
+
+<script>
+    // --- АУДИО ДВИЖОК (Синтезатор) ---
+    const AudioEngine = {
+        ctx: null,
+        isPlaying: false,
+        musicTimer: null,
+        musicOn: true,
+        
+        init() {
+            if (!this.ctx) {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.playMusicLoop();
+            } else if (this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        },
+
+        playTone(freq, type, duration, vol = 0.1) {
+            if (!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+        },
+
+        sfx(type) {
+            if (!this.ctx) return;
+            switch(type) {
+                case 'coin': 
+                    this.playTone(1200, 'sine', 0.1, 0.1); 
+                    setTimeout(() => this.playTone(1800, 'sine', 0.2, 0.1), 100);
+                    break;
+                case 'buy': 
+                    this.playTone(600, 'square', 0.1, 0.1); 
+                    setTimeout(() => this.playTone(800, 'square', 0.2, 0.1), 100);
+                    break;
+                case 'good': 
+                    this.playTone(400, 'triangle', 0.1); 
+                    setTimeout(() => this.playTone(600, 'triangle', 0.2), 100);
+                    break;
+                case 'bad': 
+                    this.playTone(150, 'sawtooth', 0.4, 0.2); 
+                    this.playTone(100, 'sawtooth', 0.4, 0.2); 
+                    break;
+                case 'error':
+                    this.playTone(100, 'square', 0.1, 0.1);
+                    break;
+                case 'lvlup':
+                    [400, 500, 600, 800].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.2, 0.1), i*100));
+                    break;
+            }
+        },
+
+        playMusicLoop() {
+            if (!this.musicOn || game.dead) return;
+            // Простая генеративная мелодия
+            const baseFreq = game.s.health < 30 ? 100 : 300; // Низкий тон если опасно
+            const type = game.s.health < 30 ? 'sawtooth' : 'sine';
+            const note = baseFreq + Math.random() * 200;
+            
+            // Если спит - музыка тише и медленнее
+            if (game.isSleep) {
+                this.playTone(200, 'sine', 1.0, 0.02);
+                this.musicTimer = setTimeout(() => this.playMusicLoop(), 2000);
+            } else {
+                this.playTone(note, type, 0.3, 0.03);
+                this.musicTimer = setTimeout(() => this.playMusicLoop(), game.s.health < 30 ? 200 : 800);
+            }
+        }
+    };
+
+    function initAudio() { AudioEngine.init(); }
+    function toggleMusic(e) { 
+        e.stopPropagation();
+        AudioEngine.musicOn = !AudioEngine.musicOn; 
+        e.target.innerText = AudioEngine.musicOn ? '🎵' : '🔇';
+        if(AudioEngine.musicOn) AudioEngine.playMusicLoop();
+    }
+
+    // --- РЕЧЬ ---
+    function speech(text, pitch = 1.6, rate = 1.3) {
+        if (!window.speechSynthesis || game.dead) return;
+        window.speechSynthesis.cancel();
+        
+        const bubble = document.getElementById('bubble');
+        bubble.innerText = text; bubble.classList.add('show');
+        setTimeout(() => bubble.classList.remove('show'), 2000);
+        
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ru-RU'; u.pitch = pitch; u.rate = rate;
+        window.speechSynthesis.speak(u);
+    }
+
+    // --- МАГАЗИН ---
+    const shop = {
+        items: [
+            { id: 'toy', name: 'Плюшевый Мишка', desc: 'Валя радуется сама по себе', price: 50, icon: '🧸' },
+            { id: 'pacifier', name: 'Золотая Соска', desc: 'Энергия тратится медленнее', price: 100, icon: '👶' },
+            { id: 'diaper', name: 'Супер Памперс', desc: 'Защищает от 1 аварии', price: 75, icon: '🩲' },
+            { id: 'medicine', name: 'Аптечка', desc: 'Полное лечение (Одноразовое)', price: 30, icon: '💊' }
+        ],
+        toggle() {
+            const m = document.getElementById('shop-modal');
+            m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+            if (m.style.display === 'flex') this.render();
+        },
+        render() {
+            const list = document.getElementById('shop-list');
+            list.innerHTML = '';
+            this.items.forEach(item => {
+                const bought = game.inventory[item.id] && item.id !== 'medicine' && item.id !== 'diaper'; // Расходники можно брать много раз
+                const btnClass = bought ? 'buy-btn bought' : 'buy-btn';
+                const btnText = bought ? 'КУПЛЕНО' : `${item.price} 🪙`;
+                const clickAction = bought ? '' : `shop.buy('${item.id}', ${item.price})`;
+                
+                list.innerHTML += `
+                    <div class="shop-item">
+                        <div class="shop-info">
+                            <span class="shop-name">${item.icon} ${item.name}</span>
+                            <span class="shop-desc">${item.desc}</span>
+                        </div>
+                        <button class="${btnClass}" onclick="${clickAction}">${btnText}</button>
+                    </div>
+                `;
+            });
+        },
+        buy(id, price) {
+            if (game.money >= price) {
+                game.money -= price;
+                
+                if (id === 'medicine') {
+                    game.s.health = 100;
+                    speech("Я здорова!", 1.5);
+                    game.createFloater("❤️ HP FULL", "#2ecc71");
+                } else if (id === 'diaper') {
+                    game.inventory.diaper = (game.inventory.diaper || 0) + 1;
+                    game.createFloater("+1 ПАМПЕРС", "#fff");
+                } else {
+                    game.inventory[id] = true;
+                    document.getElementById(`inv-${id}`).classList.add('active');
+                }
+                
+                AudioEngine.sfx('buy');
+                game.updateUI();
+                this.render();
+            } else {
+                AudioEngine.sfx('error');
+                game.createFloater("МАЛО ДЕНЕГ!", "red");
+            }
+        }
+    };
+
+    // --- ИГРА ---
+    const game = {
+        s: { hunger: 100, energy: 100, happy: 100, health: 100 },
+        lvl: 1, timeAlive: 0, dead: false, money: 0,
+        inventory: { toy: false, pacifier: false, diaper: 0 },
+        isSleep: false, isPoop: false, isVomit: false,
+
+        act(action) {
+            if (this.dead) return;
+            initAudio(); // first interaction
+            
+            // ПРОВЕРКА СНА
+            if (this.isSleep && action !== 'sleep') {
+                speech("Тссс! Я сплю!", 0.8, 0.8);
+                this.createFloater("💤 Zzz...", "#fff");
+                AudioEngine.sfx('error');
+                return;
+            }
+
+            // Анимация нажатия
+            const face = document.getElementById('circle');
+            face.style.transform = 'scale(0.9) rotate(-5deg)';
+            setTimeout(() => face.style.transform = 'scale(1)', 150);
+
+            let cost = 1;
+
+            switch(action) {
+                case 'feed':
+                    if (this.isVomit) { 
+                        speech("Не буду!", 1.2); this.damage(5, "Еда при тошноте"); 
+                    } else if (this.s.hunger > 95) { 
+                        this.isVomit = true; speech("Ой, лишнее...", 1.5); this.createFloater("🤢 ПЕРЕКОРМ", "#badc58");
+                    } else { 
+                        this.s.hunger += 30; this.s.health += 5; 
+                        speech("Вкусно!", 1.8); AudioEngine.sfx('good'); this.createFloater("+ЕДА", "#ff9ff3"); 
+                    }
+                    break;
+                case 'play':
+                    if (this.s.energy < 20) { 
+                        speech("Устала...", 1.0); this.s.happy -= 5; 
+                    } else { 
+                        this.s.happy += 25; this.s.energy -= 20; this.s.hunger -= 15; 
+                        speech("Ураа!", 2.0); AudioEngine.sfx('good'); this.createFloater("+РАДОСТЬ", "#feca57"); 
+                    }
+                    break;
+                case 'sleep':
+                    this.isSleep = !this.isSleep; 
+                    document.getElementById('sleep-icon').style.display = this.isSleep ? 'block' : 'none';
+                    speech(this.isSleep ? "Споки..." : "Доброе утро!", this.isSleep ? 0.8 : 1.6);
+                    document.body.className = this.isSleep ? 'bg-sleep' : 'bg-normal';
+                    // Обновить состояние кнопок
+                    document.querySelectorAll('.action-btn').forEach(b => {
+                        if(b.dataset.act !== 'sleep') b.classList.toggle('disabled', this.isSleep);
+                    });
+                    break;
+                case 'heal':
+                    if (this.money >= 5) {
+                        this.money -= 5; // Лечение стоит денег
+                        this.s.health += 25; this.s.happy -= 15; 
+                        speech("Горько!", 1.8); AudioEngine.sfx('bad'); this.createFloater("+ЗДОРОВЬЕ -5🪙", "#1dd1a1");
+                    } else {
+                        speech("Нет деняк...", 1.2);
+                        this.createFloater("НУЖНО 5🪙", "red");
+                    }
+                    break;
+                case 'wash':
+                    if (this.isPoop || this.isVomit) { 
+                        this.isPoop = false; this.isVomit = false; this.s.happy += 20; 
+                        speech("Свежесть!", 1.6); AudioEngine.sfx('good'); this.createFloater("ЧИСТО", "#74b9ff"); 
+                    } else { 
+                        this.s.happy -= 5; speech("Я чистая!", 1.5); 
+                    }
+                    break;
+                case 'hug':
+                    this.s.happy += 15; speech("Люблю!", 1.4); this.createFloater("❤️", "red"); AudioEngine.sfx('good');
+                    break;
+            }
+            this.fixStats(); this.updateUI();
+        },
+
+        init() {
+            setInterval(() => this.tick(), 200); // Быстрый тик
+            setInterval(() => this.events(), 1500); // События раз в 1.5 сек
+            this.updateUI();
+        },
+
+        tick() {
+            if (this.dead) return;
+            this.timeAlive += 0.2;
+            
+            // ЛЕВЕЛ АП
+            if (Math.floor(this.timeAlive) > 0 && Math.floor(this.timeAlive) % 20 === 0 && (this.timeAlive - Math.floor(this.timeAlive) < 0.2)) {
+                this.levelUp();
+            }
+
+            // Множитель сложности
+            const diff = 1 + (this.lvl * 0.2); 
+            
+            // Пассивные предметы
+            const pacifierBonus = this.inventory.pacifier ? 0.5 : 1;
+            const toyBonus = this.inventory.toy ? 0.2 : 0;
+
+            if (this.isSleep) {
+                this.s.energy += 1.5; 
+                this.s.hunger -= 0.3 * diff;
+                this.s.health += 0.2;
+            } else {
+                this.s.energy -= 0.3 * diff * pacifierBonus;
+                this.s.hunger -= 0.5 * diff;
+                this.s.happy -= 0.4 * diff;
+                this.s.happy += toyBonus; // Мишка радует
+            }
+
+            // Штрафы за состояние
+            if (this.isPoop) { this.s.health -= 0.5 * diff; this.s.happy -= 0.5; }
+            if (this.isVomit) { this.s.health -= 0.3 * diff; this.s.hunger += 0.2; }
+
+            // Критические значения
+            if (this.s.hunger <= 0) this.damage(1.0 * diff, "Истощение");
+            if (this.s.happy <= 0) this.damage(0.5 * diff, "Тоска");
+            
+            // Проверка смерти
+            if (this.s.health <= 0) this.die("Остановка сердца");
+
+            this.fixStats();
+            this.updateUI();
+        },
+
+        events() {
+            if (this.dead || this.isSleep) return;
+            const risk = 0.08 + (this.lvl * 0.01); // Риск растет
+            
+            if (Math.random() < risk) {
+                // ПОПЫТКА ОБКАКАТЬСЯ
+                if (!this.isPoop) {
+                    if (this.inventory.diaper > 0) {
+                        this.inventory.diaper--;
+                        speech("Памперс спас!", 1.2);
+                        this.createFloater("-1 ПАМПЕРС", "#fff");
+                        AudioEngine.sfx('good');
+                    } else {
+                        this.isPoop = true;
+                        speech("Ой, кака...", 1.0);
+                        AudioEngine.sfx('bad');
+                        this.createFloater("💩 АВАРИЯ!", "#8B4513");
+                    }
+                }
+            }
+            if (Math.random() < risk * 0.5 && !this.isVomit) {
+                this.isVomit = true;
+                speech("Меня мутит...", 0.9);
+                AudioEngine.sfx('bad');
+                this.createFloater("🤮 БУЭЭЭ", "#badc58");
+            }
+        },
+
+        levelUp() {
+            this.lvl++;
+            const reward = 20 + (this.lvl * 5);
+            this.money += reward;
+            AudioEngine.sfx('lvlup');
+            speech("Уровень " + this.lvl, 1.8);
+            this.createFloater(`LVL UP! +${reward}🪙`, "#f1c40f");
+            
+            // Визуальная вспышка
+            document.body.style.filter = "brightness(1.5) contrast(1.2)";
+            setTimeout(() => document.body.style.filter = "none", 300);
+        },
+
+        damage(amount, reason) {
+            this.s.health -= amount;
+            if (this.s.health <= 0) this.die(reason);
+        },
+
+        die(reason) {
+            this.dead = true;
+            document.getElementById('game-over').style.display = 'flex';
+            document.getElementById('final-lvl').innerText = this.lvl;
+            document.getElementById('final-time').innerText = Math.floor(this.timeAlive);
+            document.getElementById('death-reason').innerText = reason;
+            AudioEngine.sfx('bad');
+            speech("Мама, холодно...", 0.5, 0.6);
+            
+            // Смена картинки на череп или мертвую Валю
+            document.getElementById('face').style.backgroundImage = 'none';
+            document.getElementById('sticker').innerText = '☠️';
+        },
+
+        createFloater(text, color) {
+            const el = document.createElement('div'); 
+            el.className = 'floater'; 
+            el.innerText = text; 
+            el.style.color = color;
+            el.style.left = (50 + (Math.random()*40 - 20)) + '%'; 
+            el.style.top = '40%';
+            document.body.appendChild(el); 
+            setTimeout(() => el.remove(), 1200);
+        },
+
+        fixStats() { for (let k in this.s) this.s[k] = Math.min(100, Math.max(0, this.s[k])); },
+
+        updateUI() {
+            document.getElementById('ui-lvl').innerText = this.lvl;
+            document.getElementById('ui-money').innerText = Math.floor(this.money);
+
+            const setBar = (id, val, color) => {
+                const el = document.getElementById('bar-'+id);
+                document.getElementById('txt-'+id).innerText = Math.floor(val) + '%';
+                el.style.width = val + '%';
+                if (val < 25) { 
+                    el.style.background = '#ff4757'; 
+                    document.getElementById('box-'+id).classList.add('critical'); 
+                } else { 
+                    el.style.background = color; 
+                    document.getElementById('box-'+id).classList.remove('critical'); 
+                }
+            };
+            setBar('hunger', this.s.hunger, '#ff9ff3'); 
+            setBar('energy', this.s.energy, '#54a0ff');
+            setBar('happy', this.s.happy, '#feca57'); 
+            setBar('health', this.s.health, '#1dd1a1');
+
+            document.getElementById('poop-icon').style.display = this.isPoop ? 'block' : 'none';
+            document.getElementById('vomit-icon').style.display = this.isVomit ? 'block' : 'none';
+
+            // Логика спрайтов и настроения
+            const face = document.getElementById('face'); 
+            const sticker = document.getElementById('sticker');
+            let mood = 'happy'; let emoji = '👶'; let bgClass = 'bg-normal';
+
+            if (this.dead) emoji = '☠️'; 
+            else if (this.isSleep) { mood = 'sleep'; emoji = '😴'; bgClass = 'bg-sleep'; } 
+            else if (this.isVomit) { mood = 'sick'; emoji = '🤢'; bgClass = 'bg-sick'; } 
+            else if (this.s.health < 40) { mood = 'cry'; emoji = '😭'; bgClass = 'bg-critical'; } 
+            else if (this.s.happy < 40 || this.s.hunger < 30) { mood = 'sad'; emoji = '🥺'; }
+
+            if (document.body.className !== bgClass) document.body.className = bgClass;
+            
+            // Попытка загрузить картинку
+            const imgPath = `valya_${mood}.png`;
+            const img = new Image();
+            img.src = imgPath;
+            img.onload = () => { face.style.backgroundImage = `url(${imgPath})`; sticker.style.opacity = 0; };
+            img.onerror = () => { face.style.backgroundImage = 'none'; sticker.style.opacity = 1; sticker.innerText = emoji; };
+        }
+    };
+
+    game.init();
+</script>
+</body>
+</html>
